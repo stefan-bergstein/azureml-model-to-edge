@@ -1,0 +1,31 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: azure-python
+spec:
+  lookupPolicy:
+    local: true
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: azure-python
+spec:
+  source:
+    git:
+      ref: dev
+      uri: 'https://github.com/stefan-bergstein/azureml-model-to-edge.git'
+    contextDir: tekton/azure-python-image
+    type: Git
+  strategy:
+    dockerStrategy:
+      dockerfilePath: Containerfile
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: azure-python:latest
+  triggers:
+    - type: ImageChange
+      imageChange: {}
+    - type: ConfigChange
