@@ -13,10 +13,9 @@ metadata:
 spec:
   source:
     git:
-      ref: dev
+      ref: 'dev'
       uri: 'https://github.com/stefan-bergstein/azureml-model-to-edge.git'
-    contextDir: tekton/azure-python-image
-    type: Git
+    contextDir: 'tekton/azure-python-image'
   strategy:
     dockerStrategy:
       dockerfilePath: Containerfile
