@@ -1,0 +1,30 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: mlflow
+spec:
+  lookupPolicy:
+    local: true
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: mlflow
+spec:
+  source:
+    git:
+      ref: 'dev'
+      uri: 'https://github.com/stefan-bergstein/azureml-model-to-edge.git'
+    contextDir: 'tekton/mlflow-image'
+  strategy:
+    dockerStrategy:
+      dockerfilePath: Containerfile
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: mlflow:latest
+  triggers:
+    - type: ImageChange
+      imageChange: {}
+    - type: ConfigChange
