@@ -1,0 +1,9 @@
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- azureml-container-build-cache-pvc.yaml
+- azureml-container-dockerfile-cache-pvc.yaml
+- download-azureml-model-task.yaml
+- azureml-container-pipeline.yaml
+- mlflow-generate-dockerfile-task.yaml
+# - azureml-container-pipelinerun.yaml

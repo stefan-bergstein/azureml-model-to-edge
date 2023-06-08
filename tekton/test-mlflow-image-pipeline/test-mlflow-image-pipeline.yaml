@@ -1,0 +1,91 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-mlflow-image
+spec:
+  params:
+  - name: model-name
+    type: string
+  - default: "1"
+    name: model-version
+    type: string
+  - default: $(context.pipelineRun.namespace)
+    name: target-namespace
+    type: string
+  - default: manuela
+    name: target-imagerepo
+    type: string
+  tasks:
+  - name: deploy-container
+    params:
+    - name: SCRIPT
+      value: "oc create deployment $(params.model-name)-$(params.model-version) --image=$(params.model-name):$(params.model-version)
+        --port=8080 -n $(params.target-namespace) --dry-run=client -o yaml | oc apply
+        -f - \noc wait deployment -n $(params.target-namespace) $(params.model-name)-$(params.model-version)
+        --for condition=Available=True --timeout=30s"
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
+  - name: create-service
+    params:
+    - name: SCRIPT
+      value: oc expose deployment  $(params.model-name)-$(params.model-version) --port=8080
+        --target-port=8080 --selector='app=$(params.model-name)-$(params.model-version)'
+        --dry-run=client -o yaml |  oc apply -f -
+    - name: VERSION
+      value: latest
+    runAfter:
+    - deploy-container
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
+  - name: test-inference-rest
+    params:
+    - name: SCRIPT
+      value: |+
+        echo "Test inference REST web service"
+        curl -v -X POST -H "Content-Type:application/json" --data '{"dataframe_split": {"columns":[ "day", "mnth", "year", "season", "holiday", "weekday", "workingday", "weathersit", "temp", "hum", "windspeed" ], "data":[[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]]}} ' http://$(params.model-name)-$(params.model-version):8080/invocations
+
+
+    - name: VERSION
+      value: latest
+    runAfter:
+    - create-service
+    taskRef:
+      kind: ClusterTask
+      name: openshift-client
+  - name: test-mlflow-rest-svc
+    params:
+    - name: model-name
+      value: $(params.model-name)
+    - name: model-version
+      value: $(params.model-version)
+    runAfter:
+    - test-inference-rest
+    taskRef:
+      kind: Task
+      name: test-mlflow-rest-svc
+    workspaces:
+    - name: test-data
+      workspace: test-data
+  - name: skopeo-copy
+    params:
+    - name: srcImageURL
+      value: docker://image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.model-name):$(params.model-version)
+    - name: destImageURL
+      value: docker://quay.io/manuela/$(params.model-name):$(params.model-version)
+    - name: srcTLSverify
+      value: "true"
+    - name: destTLSverify
+      value: "true"
+    runAfter:
+    - test-mlflow-rest-svc
+    taskRef:
+      kind: ClusterTask
+      name: skopeo-copy
+    workspaces:
+    - name: images-url
+      workspace: workspace
+  workspaces:
+  - name: workspace
+  - name: test-data

@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: deploy-to-podman-pipeline
+spec:
+  params:
+  - name: model-name
+    type: string
+  - name: model-version
+    default: "1"
+    type: string
+  - name: target-system
+    type: string
+  - name: target-system-user
+    default: "root"
+    type: string    
+  tasks:
+  - name: deploy-to-podman
+    params:
+    - name: model-name
+      value: $(params.model-name)
+    - name: model-version
+      value: $(params.model-version)
+    - name: current-namespace
+      value: $(context.pipelineRun.namespace)
+    - name: target-system
+      value: $(params.target-system)
+    - name: target-system-user
+      value: $(params.target-system-user)      
+    taskRef:
+      kind: Task
+      name: deploy-to-podman
+    workspaces:
+    - name: ansible-config
+      workspace: ansible-config
+    - name: ansible-ssh-key
+      workspace: ssh-key-target-system
+    - name: workspace
+      workspace: workspace
+  workspaces:
+  - name: workspace
+  - name: ssh-key-target-system
+  - name: ansible-config

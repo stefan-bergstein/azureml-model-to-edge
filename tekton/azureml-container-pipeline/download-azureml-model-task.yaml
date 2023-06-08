@@ -1,0 +1,94 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: download-azureml-model
+spec:
+  description: This Task can be used to a download Azure ML model
+  params:
+  - name: model-name
+    type: string
+  - name: model-version
+    default: "1"
+    type: string
+  - name: azure-env-secret-name
+    default: "azure-env"
+    type: string
+  - name: current-namespace 
+    default: "default"
+    type: string
+  steps:
+  - name: download-model
+    image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/azure-python:latest
+    script: |
+      #!/usr/bin/env python3
+      import os
+
+      # import required libraries for workspace
+      from azure.ai.ml import MLClient
+      from azure.identity import DefaultAzureCredential,EnvironmentCredential
+
+      # Enter details of your Azure Machine Learning workspace
+      subscription_id = os.getenv("SUBSCRIPTION")
+      resource_group = os.getenv("RESOURCEGROUP")
+      workspace = os.getenv("WORKSPACE")
+
+      # connect to the workspace
+      ml_client = MLClient(EnvironmentCredential(),subscription_id, resource_group, workspace)
+
+      model_name="$(params.model-name)"
+      model_version="$(params.model-version)"
+
+      print(f"List models with name:{model_name}:")
+
+      models = ml_client.models.list(name=model_name)
+      for model in models:
+          print(f"{model.name}, {model.version}, {model.type}")
+
+      print(f"Downloading model:{model_name} , version:{model_version} ...")
+
+      try:
+          ml_client.models.download(model_name,model_version)
+      except Exception as e: 
+          print(f"Model Download failed with Exception: {e}")  
+
+    env:
+      - name: RESOURCEGROUP
+        valueFrom:
+          secretKeyRef:
+            name: $(params.azure-env-secret-name)
+            key: "RESOURCEGROUP"
+      - name: WORKSPACE
+        valueFrom:
+          secretKeyRef:
+            name: $(params.azure-env-secret-name)
+            key: "WORKSPACE"
+      - name: SUBSCRIPTION
+        valueFrom:
+          secretKeyRef:
+            name: $(params.azure-env-secret-name)
+            key: "SUBSCRIPTION"
+      - name: AZURE_TENANT_ID
+        valueFrom:
+          secretKeyRef:
+            name: $(params.azure-env-secret-name)
+            key: "AZURE_TENANT_ID"
+      - name: AZURE_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: $(params.azure-env-secret-name)
+            key: "AZURE_CLIENT_ID"
+      - name: AZURE_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: $(params.azure-env-secret-name)
+            key: "AZURE_CLIENT_SECRET"
+    workingDir: $(workspaces.workspace.path)
+
+  - name: check-model-files
+    image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/azure-python:latest
+    script: ls -l $(params.model-name)/mlflow-model/
+    workingDir: $(workspaces.workspace.path)
+
+  workspaces:
+  - description: The workspace for the downloaded model.
+    name: workspace

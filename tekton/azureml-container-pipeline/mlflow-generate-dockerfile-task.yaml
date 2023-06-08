@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: mlflow-generate-dockerfile
+spec:
+  description: This Task can be used to a download Azure ML model
+  params:
+  - name: model-name
+    type: string
+  - name: current-namespace 
+    default: "default"
+    type: string
+  steps:
+  - name: generate-dockerfile
+    image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/mlflow:latest
+    script:  mlflow models generate-dockerfile -m $(params.model-name)/mlflow-model  --output-directory $(workspaces.dockerfile.path)  --enable-mlserver
+    workingDir: $(workspaces.workspace.path)  
+  - name: patch-docker-file
+    image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/mlflow:latest
+    script: sed -i '/^ENTRYPOINT/i RUN chgrp -R 0 /opt/mlflow/ && chmod -R g=u /opt/mlflow/\nUSER 1001\nEXPOSE 8080' Dockerfile
+    workingDir: $(workspaces.dockerfile.path)
+  - name: check-docker-files
+    image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/mlflow:latest
+    script: cat Dockerfile && ls -l *
+    workingDir: $(workspaces.dockerfile.path) 
+  workspaces:
+  - description: The workspace for the downloaded model.
+    name: workspace
+  - description: The workspace for the dockerfile.
+    name: dockerfile

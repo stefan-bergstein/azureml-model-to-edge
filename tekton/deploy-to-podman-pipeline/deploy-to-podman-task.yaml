@@ -1,0 +1,71 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-to-podman
+spec:
+  params:
+  - name: target-system
+    type: string
+  - name: target-system-user
+    default: "centos"  
+    type: string      
+  - name: model-name
+    type: string
+  - name: model-version
+    default: "1"
+    type: string
+  - name: container-repo
+    default: "quay.io/manuela"
+    type: string
+  - name: current-namespace 
+    default: "default"
+  steps:
+    - name: install-requirements-and-run-playbook
+      image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/ansible-playbook:latest
+      script: |
+        #!/bin/bash
+        set -xe
+
+        echo "*** install-requirements ***"
+
+        if [ -f $(workspaces.ansible-config.path)/requirements.txt ];
+        then
+          pip3 install --user -r $(workspaces.ansible-config.path)/requirements.txt
+        fi
+
+        if [ -f  $(workspaces.ansible-config.path)/requirements.yml ];
+        then
+          ansible-galaxy role install -vv -r $(workspaces.ansible-config.path)/requirements.yml
+          ansible-galaxy collection install -vv -r $(workspaces.ansible-config.path)/requirements.yml
+        fi
+ 
+        echo "*** create-inventory ***"
+        cat << 'EOF' > inv
+        [rhde-ml]
+        $(params.target-system)
+
+        [rhde-ml:vars]
+        ansible_ssh_private_key_file=ssh-key
+        target_system_user=$(params.target-system-user)
+        container_image_name=$(params.model-name)
+        container_image_tag=$(params.model-version)
+        container_image_repo=$(params.container-repo)
+        EOF
+
+        echo "*** run-playbook ***"
+
+        cp $(workspaces.ansible-ssh-key.path)/ssh-key .
+        chmod 600 ssh-key
+        export ANSIBLE_HOST_KEY_CHECKING=False
+
+        ansible-playbook -i inv  $(workspaces.ansible-config.path)/playbook.yml -vvvv
+
+      workingDir: '$(workspaces.workspace.path)'
+
+  workspaces:
+  - name: ansible-config
+    description: The workspace for the ansible config.
+  - name: workspace
+    description: Workspace for this task
+  - name: ansible-ssh-key
+    description: SSH key for connecting to the target-system

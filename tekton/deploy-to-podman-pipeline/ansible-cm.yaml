@@ -1,0 +1,24 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: ansible-cm
+data:
+  playbook.yml: |-
+    ---
+    - name: Deploy Pod to Device Edge
+      hosts: rhde-ml
+      remote_user: "{{ target_system_user }}"
+
+      tasks:
+      - name: Run container
+        containers.podman.podman_container:
+          name: "{{ container_image_name }}"
+          image: "{{ container_image_repo }}/{{ container_image_name }}:{{ container_image_tag }}"
+          ports:
+            - "8080:8080"
+          state: started
+  requirements.yml: |
+    ---
+    collections:
+      - name: containers.podman
+        source: https://galaxy.ansible.com
