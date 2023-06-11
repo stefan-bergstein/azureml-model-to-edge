@@ -17,6 +17,14 @@ data:
           ports:
             - "8080:8080"
           state: started
+      - name: Podman status
+        ansible.builtin.command: podman ps
+        register: results
+      - debug:
+          var: results.stdout_lines
+
+
+
   requirements.yml: |
     ---
     collections:

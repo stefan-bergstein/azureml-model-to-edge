@@ -1,0 +1,11 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: bike-share-test-data
+
+data:
+  data.json: |+
+    {"dataframe_split": {"columns":[ "instant", "date", "season",  "yr", "mnth", "weekday", "weathersit", "temp", "atemp", "hum", "windspeed" ], "data":[[ 100,"00:00:00", 0, 0, 0, 0, 0, 0, 0, 0, 0 ]]}}
+
+  output.json: '{"predictions": [985]}'
+

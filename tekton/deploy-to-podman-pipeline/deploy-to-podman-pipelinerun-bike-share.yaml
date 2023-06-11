@@ -3,17 +3,17 @@ kind: PipelineRun
 metadata:
   labels:
     tekton.dev/pipeline: deploy-to-podman-pipeline
-  generateName: deploy-to-podman-pipeline-
+  generateName: deploy-to-podman-pipeline-bike-share-
 spec:
   params:
   - name: model-name
-    value: bike-rentals-auto-ml
+    value: bike-share-auto-ml
   - name: model-version
     value: "1"
   - name: target-system
-    value: "10.32.111.28"
+    value: "centos-stream9-podman-ssh.sandbox-sbergste.svc.cluster.local"
   - name: target-system-user
-    value: "root"    
+    value: "centos"    
   pipelineRef:
     name: deploy-to-podman-pipeline
   serviceAccountName: pipeline

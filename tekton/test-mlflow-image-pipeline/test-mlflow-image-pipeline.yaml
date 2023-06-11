@@ -22,7 +22,7 @@ spec:
       value: "oc create deployment $(params.model-name)-$(params.model-version) --image=$(params.model-name):$(params.model-version)
         --port=8080 -n $(params.target-namespace) --dry-run=client -o yaml | oc apply
         -f - \noc wait deployment -n $(params.target-namespace) $(params.model-name)-$(params.model-version)
-        --for condition=Available=True --timeout=30s"
+        --for condition=Available=True --timeout=300s"
     taskRef:
       kind: ClusterTask
       name: openshift-client
@@ -39,21 +39,6 @@ spec:
     taskRef:
       kind: ClusterTask
       name: openshift-client
-  - name: test-inference-rest
-    params:
-    - name: SCRIPT
-      value: |+
-        echo "Test inference REST web service"
-        curl -v -X POST -H "Content-Type:application/json" --data '{"dataframe_split": {"columns":[ "day", "mnth", "year", "season", "holiday", "weekday", "workingday", "weathersit", "temp", "hum", "windspeed" ], "data":[[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]]}} ' http://$(params.model-name)-$(params.model-version):8080/invocations
-
-
-    - name: VERSION
-      value: latest
-    runAfter:
-    - create-service
-    taskRef:
-      kind: ClusterTask
-      name: openshift-client
   - name: test-mlflow-rest-svc
     params:
     - name: model-name
@@ -61,7 +46,7 @@ spec:
     - name: model-version
       value: $(params.model-version)
     runAfter:
-    - test-inference-rest
+    - create-service
     taskRef:
       kind: Task
       name: test-mlflow-rest-svc
@@ -73,7 +58,7 @@ spec:
     - name: srcImageURL
       value: docker://image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.model-name):$(params.model-version)
     - name: destImageURL
-      value: docker://quay.io/manuela/$(params.model-name):$(params.model-version)
+      value: docker://quay.io/$(params.target-imagerepo)/$(params.model-name):$(params.model-version)
     - name: srcTLSverify
       value: "true"
     - name: destTLSverify

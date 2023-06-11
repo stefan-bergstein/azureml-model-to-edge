@@ -24,7 +24,7 @@ spec:
       image: image-registry.openshift-image-registry.svc:5000/$(params.current-namespace)/ansible-playbook:latest
       script: |
         #!/bin/bash
-        set -xe
+        set -e
 
         echo "*** install-requirements ***"
 
@@ -58,7 +58,7 @@ spec:
         chmod 600 ssh-key
         export ANSIBLE_HOST_KEY_CHECKING=False
 
-        ansible-playbook -i inv  $(workspaces.ansible-config.path)/playbook.yml -vvvv
+        ansible-playbook -i inv  $(workspaces.ansible-config.path)/playbook.yml
 
       workingDir: '$(workspaces.workspace.path)'
 
