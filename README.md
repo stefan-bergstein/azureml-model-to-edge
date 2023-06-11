@@ -1,6 +1,42 @@
 # azureml-model-to-edge
 An experiment to deploy Azure ML models to RHDE for serving
 
+## Approach
+
+### Experiment 1
+
+**Model training with Azure Automated ML**
+![models-in-azureml](docs/images/models-in-azureml.png)
+- Train models in the Azure Machine Learning studio with Automated ML
+- Register the model in the workbench
+
+**Pipeline azureml-container:**
+![azureml-container](docs/images/azureml-container.png)
+- Download the model and conda environment
+- Generated and patch the Dockerfile
+- Create an imagestream
+- Build the mlflow container
+
+**Pipeline test-mlflow-image:**
+![test-mlflow-image](docs/images/test-mlflow-image.png)
+- Deploy the container on OpenShift for local testing
+- Create a services
+- Test the MLflow REST Service
+- Upload to quat.io
+
+**Pipeline deploy-to-podman:**
+![test-mlflow-image](docs/images/deploy-to-podman.png)
+- Deploy the container to the target RHDE system with Ansible
+- Prints out information about the containers (podman ps)
+
+
+### Experiment 2
+- TBD: Similar to experiment 1 but create a ostree image with the model and model serving
+
+### Experiment 3
+- TBD: Similar to experiment 1 but deploy to MicroShift with Azure Arc
+
+
 
 ## Prerequisites
 - Trained AzureML model including Mlflow environment
@@ -14,7 +50,8 @@ An experiment to deploy Azure ML models to RHDE for serving
 
 ## Review the trained AzureML model
 
-tbd
+TBD. See also [Tutorial: Forecast demand with no-code automated machine learning in the Azure Machine Learning studio](https://learn.microsoft.com/en-us/azure/machine-learning/tutorial-automated-ml-forecast?view=azureml-api-2)
+
 
 ## Build required container images for pipeline tasks
 
