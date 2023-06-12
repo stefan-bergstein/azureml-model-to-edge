@@ -5,26 +5,46 @@ An experiment to deploy Azure ML models to RHDE for serving
 
 ### Experiment 1
 
-**Model training with Azure Automated ML**
+This tail focus on Azure Automated ML and the models and conda environments that are produced bu Azure ML. Here are two examples: [bike-rentals-auto-ml](models/bike-rentals-auto-ml/) and [bike-share-auto-ml](models/bike-share-auto-ml/):
+
+```
+bike-rentals-auto-ml/
+├── conda.yaml
+├── MLmodel
+├── model.pkl
+├── python_env.yaml
+└── requirements.txt
+
+bike-share-auto-ml/
+├── conda.yaml
+├── MLmodel
+├── model.pkl
+├── python_env.yaml
+└── requirements.txt
+```
+
+
+**Step 1: Model training with Azure Automated ML**
 ![models-in-azureml](docs/images/models-in-azureml.png)
 - Train models in the Azure Machine Learning studio with Automated ML
 - Register the model in the workbench
 
-**Pipeline azureml-container:**
+
+**Step 2: Pipeline azureml-container:**
 ![azureml-container](docs/images/azureml-container.png)
 - Download the model and conda environment
 - Generated and patch the Dockerfile
 - Create an imagestream
 - Build the mlflow container
 
-**Pipeline test-mlflow-image:**
+**Step 3: Pipeline test-mlflow-image:**
 ![test-mlflow-image](docs/images/test-mlflow-image.png)
 - Deploy the container on OpenShift for local testing
 - Create a services
 - Test the MLflow REST Service
-- Upload to quat.io
+- Upload to quay.io
 
-**Pipeline deploy-to-podman:**
+**Step 4: Pipeline deploy-to-podman:**
 ![test-mlflow-image](docs/images/deploy-to-podman.png)
 - Deploy the container to the target RHDE system with Ansible
 - Prints out information about the containers (podman ps)
