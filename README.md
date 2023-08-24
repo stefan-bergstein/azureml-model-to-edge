@@ -5,7 +5,7 @@ An experiment to deploy Azure ML models to RHDE for serving
 
 ### Experiment 1
 
-This trail focus on Azure Automated ML and the models and conda environments that are produced bu Azure ML. Here are two examples: [bike-rentals-auto-ml](models/bike-rentals-auto-ml/) and [bike-share-auto-ml](models/bike-share-auto-ml/):
+This trail focus on Azure Automated ML and the models and conda environments that are produced by Azure ML. Here are two examples: [bike-rentals-auto-ml](models/bike-rentals-auto-ml/) and [bike-share-auto-ml](models/bike-share-auto-ml/):
 
 ```
 bike-rentals-auto-ml/
